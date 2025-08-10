@@ -32,13 +32,23 @@ _WORDLIKE = re.compile(r"[\w\-]+", re.UNICODE)
 _BRACKETED = re.compile(r"\s*(\[[^\]]+\]|\([^\)]+\))\s*")
 
 
-def load_model(model_size: str, device: Literal["auto", "cpu", "cuda"] = "auto", compute_type: Optional[str] = None) -> WhisperModel:
+def load_model(
+    model_size: str,
+    device: Literal["auto", "cpu", "cuda"] = "auto",
+    compute_type: Optional[str] = None,
+    model_dir: Optional[str] = None,
+) -> WhisperModel:
     if device == "auto":
         # Prefer CUDA if available, else CPU
         device = "cuda" if os.environ.get("CUDA_VISIBLE_DEVICES") not in (None, "") else "cpu"
     if compute_type is None:
         compute_type = "int8_float16" if device == "cuda" else "int8"
-    return WhisperModel(model_size, device=device, compute_type=compute_type)
+    return WhisperModel(
+        model_size,
+        device=device,
+        compute_type=compute_type,
+        download_root=model_dir,
+    )
 
 
 def _should_mark_indistinct(text: str, avg_logprob: Optional[float], avg_word_prob: Optional[float]) -> bool:

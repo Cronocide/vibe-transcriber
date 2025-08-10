@@ -21,7 +21,7 @@ def _default_output_path(input_path: str) -> str:
 def _parse_other_party_from_filename(path: str) -> Optional[str]:
     name = None
     fname = os.path.basename(path)
-    # Examples: Tel-From-Jonathan_Dayley-2025-08-07-18-15-48.m4a
+    # Examples: Tel-From-John_Smith-2025-08-07-18-15-48.m4a
     m = re.search(r"Tel-(?:From|To)-(.+?)-\d{4}-\d{2}-\d{2}-", fname)
     if m:
         name = m.group(1)
@@ -30,19 +30,21 @@ def _parse_other_party_from_filename(path: str) -> Optional[str]:
 
 
 @click.command()
-@click.option("--input", "input_path", type=str, required=True, help="Input stereo M4A path (ALAC/AAC)")
-@click.option("--output", "output_path", type=str, default=None, help="Output .lrc path (default beside input)")
-@click.option("--model", "model_size", type=str, default="medium.en", help="Whisper model size (e.g., small.en, medium.en, large-v3)")
-@click.option("--device", type=click.Choice(["auto", "cpu", "cuda"]), default="auto")
-@click.option("--compute-type", "compute_type", type=str, default=None, help="faster-whisper compute type (auto)")
-@click.option("--other-on", type=click.Choice(["left", "right"]), default="left", help="Which channel is the non-you party")
-@click.option("--you-name", type=str, default="You", help="Override name for your channel label")
-@click.option("--other-name", type=str, default=None, help="Override name parsed from filename for the other party")
-@click.option("--normalize", type=click.Choice(["loudnorm", "dynaudnorm", "none"]), default="loudnorm", help="Per-channel normalization")
+@click.option("--input", "input_path", type=str, required=True, envvar="INPUT_PATH", help="Input stereo M4A path (ALAC/AAC)")
+@click.option("--output", "output_path", type=str, default=None, envvar="OUTPUT_PATH", help="Output .lrc path (default beside input)")
+@click.option("--model", "model_size", type=str, default="medium.en", envvar="MODEL_SIZE", help="Whisper model size (e.g., small.en, medium.en, large-v3)")
+@click.option("--model-dir", type=str, default="/models", envvar="WHISPER_MODEL_DIR", help="Directory from which to load whisper models (/models)")
+@click.option("--device", type=click.Choice(["auto", "cpu", "cuda"]), default="auto", envvar="DEVICE")
+@click.option("--compute-type", "compute_type", type=str, default=None, envvar="COMPUTE_TYPE", help="faster-whisper compute type (auto)")
+@click.option("--other-on", type=click.Choice(["left", "right"]), default="left", envvar="OTHER_ON", help="Which channel is the non-you party")
+@click.option("--you-name", type=str, default="You", envvar="YOU_NAME", help="Override name for your channel label")
+@click.option("--other-name", type=str, default=None, envvar="OTHER_NAME", help="Override name parsed from filename for the other party")
+@click.option("--normalize", type=click.Choice(["loudnorm", "dynaudnorm", "none"]), default="loudnorm", envvar="NORMALIZE", help="Per-channel normalization")
 def main(
     input_path: str,
     output_path: Optional[str],
     model_size: str,
+    model_dir: Optional[str],
     device: str,
     compute_type: Optional[str],
     other_on: str,
@@ -74,8 +76,9 @@ def main(
         left_path, right_path = split.left_wav_path, split.right_wav_path
 
     # Load model
+    os.makedirs(model_dir, exist_ok=True)
     click.echo(f"Loading whisper model: {model_size} ({device}) ...")
-    model = load_model(model_size, device=device, compute_type=compute_type)
+    model = load_model(model_size, device=device, compute_type=compute_type, model_dir=model_dir)
 
     # Transcribe each channel with VAD
     click.echo(f"Transcribing LEFT channel as '{left_label}' ...")

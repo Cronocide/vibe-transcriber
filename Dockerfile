@@ -7,7 +7,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     # Reduce pip's output and force UTF-8
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     LC_ALL=C.UTF-8 \
-    LANG=C.UTF-8
+    LANG=C.UTF-8 \
+    WHISPER_MODEL_DIR=/models
 
 # System deps: ffmpeg for splitting/processing audio, libsndfile for soundfile
 RUN apt-get update \
@@ -27,13 +28,8 @@ COPY transcriber /app/transcriber
 RUN python -m pip install -U pip \
  && pip install --no-cache-dir .
 
-# Pre-download the default model (medium.en) into the image layer cache
-# This ensures first run doesn't have to download the model
-RUN python - << 'EOH'
-from transcriber.whisper_utils import load_model
-# CPU device ensures the model downloads in a generic format
-load_model('medium.en', device='cpu')
-EOH
+# Create a volume location for models; operator can mount a persistent directory here
+VOLUME ["/models"]
 
-# Default entrypoint to the CLI
+# Default entrypoint to the CLI (alias provided in pyproject)
 ENTRYPOINT ["vibe-transcriber"]
