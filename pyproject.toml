@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vibe-transcriber"
+version = "0.1.0"
+description = "Stereo call transcription to .lrc (Simple Lyrics) with faster-whisper and per-channel processing"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+authors = [
+  { name = "Cronocide" }
+]
+dependencies = [
+  "faster-whisper==1.0.3",
+  "click==8.1.7",
+  "numpy>=1.24,<3",
+  "soundfile>=0.12",
+  "tqdm>=4.66",
+]
+
+[project.scripts]
+vibe-transcriber = "transcriber.main:main"
+
+[tool.setuptools]
+packages = { find = { include = ["transcriber*"], exclude = [] } }
+
+[project.urls]
+Homepage = "https://git.cronocide.net/Cronocide/vibe-transcriber"
